@@ -1,0 +1,49 @@
+body { position:relative; margin:1em auto; width:35em; font:17px FreeSans,Helvetica,sans-serif; color:#333; background:#ddd; }
+
+#background { width:100%; position:fixed; bottom:0; left:0; z-index:-1; }
+#youAre {float:left;font-size:1.2em;margin:1px;padding:10px;}
+.charactersList {margin-left:auto;margin-right:auto;}
+.character {padding:1px;margin:3em;text-align:center;background-color:#eee;border-radius:3em}
+.charactersForm header {padding:1px;text-align:center;background-color:#eee;border-radius:3em}
+.character img {width:20em;margin-top:2em;border-radius:3em}
+.character h2 {margin-bottom:1em;border-radius:3em}
+.charactersForm header h2 {text-align:center;margin:1em;}
+
+.mainView,.charactersForm {display:none}
+.avatar {float:left;padding:1px;}
+.avatar img {width:2em;height:2em;border-radius:0.3em;}
+.contact .summary {height:2em;padding:1px;}
+.textbox {position:relative;padding:1em;}
+.textbox span {float:left;position:absolute;bottom:0.2em;}
+.contact,.secretForm {
+	background:#eee; margin-top:2em; padding:1em;
+	border-radius:1em; box-shadow:0 1px 0 #fff; box-shadow:inset 0 1px 0 #aaa;
+}
+li { margin:1em; }
+
+input {
+display:inline; margin:.5em; padding:.5em; font-size:.8em;
+color:#333; text-shadow:0 1px 1px rgba(255, 255, 255, 0.75);
+border:1px solid #ccc;
+border-bottom-color:#bbb; border-radius:.3em;
+background:#e6e6e6 no-repeat;
+	background-image:linear-gradient(#fff, #fff 0.25, #e6e6e6);
+	box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);
+	transition:0.1s linear all;
+}
+input[type="text"] { background:#fff no-repeat;background-image:linear-gradient(#e6e6e6, #e6e6e6 0.25, #fff); }
+input:hover { background-position:0 -1em; text-decoration:none; }
+.negative {
+	color:#fff; text-shadow:0 -1px 0 rgba(0, 0, 0, 0.25);
+	border-color:#c43c35 #c43c35 #882a25; border-color:rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+	background:#c43c35 repeat-x;
+	background-image:linear-gradient(top, #ee5f5b, #c43c35);
+}
+.positive {
+	color:#fff; text-shadow:0 -1px 0 rgba(0, 0, 0, 0.25);
+	border-color:#57a957 #57a957 #3d773d; border-color:rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+	background:#57a957 repeat-x;
+	background-image:linear-gradient(top, #62c462, #57a957);
+}
+.tabSummaryB {background-color: pink}
+.tabSummaryL {background-color: lightgreen}

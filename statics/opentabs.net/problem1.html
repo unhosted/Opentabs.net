@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="style/app.css">
+    <script src="modules/pgp.js"></script>
+    <script src="modules/tabs.js"></script>
+    <script src="modules/contacts.js"></script>
+    
+    <!-- controller: -->
+    <script src="controller.js"></script>
+    
+    <!-- views: -->
+    <script src="views/contact.js"></script>
+    
+    <script>
+      function onBodyLoad() {
+              controller.getCharacters(function(characters) {
+                var str = '<div class="charactersList">';
+                for(var i in characters) {
+                  var character = contacts.getUser(characters[i]);
+                  str += '<div class="character" onclick="enter(\''
+                    +character.userAddress+'\');"><div class="avatarBig"><img src="'
+                    +character.avatar+'"><br><h2>'
+                    +character.name+'</h2></div></div>';
+                }
+                document.getElementById('characters').innerHTML= str+'</div>';
+                document.getElementById('charactersForm').style.display='block';
+               });
+      }
+    </script>
+    <style>
+      #background { width:100%; position:fixed; bottom:0; left:0; z-index:-1; }
+      #youAre {float:left;font-size:1.2em;margin:1px;padding:10px;}
+      .charactersList {margin-left:auto;margin-right:auto;}
+      .character {padding:1px;margin:3em;text-align:center;background-color:#eee;border-radius:3em}
+      .charactersForm header {padding:1px;text-align:center;background-color:#eee;border-radius:3em}
+      .character img {margin-top:2em;border-radius:3em}
+      .character h2 {margin-bottom:1em;border-radius:3em}
+      .charactersForm header h2 {text-align:center;margin:1em;}
+    </style>
+  </head>
+  <body onload="onBodyLoad();">
+    <div class="charactersForm" id="charactersForm">
+      <img id="background" src="../bankerwanker.jpg" alt="" />
+      <header>
+        <h2>
+          Let's get into character:
+        </h2>
+      </header>
+      <article id="characters">
+      </article>
+    </div>
+  </body>
+</html>

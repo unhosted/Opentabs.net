@@ -1,0 +1,28 @@
+.feedbackBar {border-style:solid;border-radius:5px;border-width:1px;}
+.mainView header {border-style:solid;border-radius:5px;border-width:1px;}
+.settings,.settingsIcon {display:inline;float:right}
+.mainView {width:380px}
+
+.mainView,.charactersForm {display:none}
+.avatar {float:left}
+.avatar img {width:50px;height:50px;}
+.avatarBig img {width:150px;height:150px;}
+
+body {font:1em FreeSans,Helvetica,sans-serif; margin:1em auto; position:relative; width:25em;}
+div {padding:1px;background: none repeat scroll 0 0 #EEEEEE; border-radius:1em; box-shadow: 0 1px 0 #AAAAAA inset; margin-top: 2em;}
+input {
+  display:inline; margin:.5em; padding:.5em .6em; font-size:.8em;
+  color:#333; text-shadow:0 1px 1px rgba(255, 255, 255, 0.75);
+  border:1px solid #ccc; border-bottom-color:#bbb; -webkit-border-radius:.3em; -moz-border-radius:.3em; border-radius:.3em;
+  background:#e6e6e6 no-repeat;
+  background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#fff), color-stop(0.25, #fff), to(#e6e6e6));
+  background-image:-webkit-linear-gradient(#fff, #fff 0.25, #e6e6e6);
+  background-image:-moz-linear-gradient(#fff, #fff 0.25, #e6e6e6);
+  background-image:-ms-linear-gradient(#fff, #fff 0.25, #e6e6e6);
+  background-image:-o-linear-gradient(#fff, #fff 0.25, #e6e6e6);
+  background-image:linear-gradient(#fff, #fff 0.25, #e6e6e6);
+  -webkit-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05); -moz-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05); box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);
+  -webkit-transition:0.1s linear all; -moz-transition:0.1s linear all; transition:0.1s linear all;
+}
+.tabSummaryB {background-color: pink}
+.tabSummaryL {background-color: lightgreen}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf8">
+    <title>hub test</title>
+    <script src="http://opentabs.net:9000/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect('http://opentabs.net:9000');
+      //listen client-side:
+      socket.on('msg', function (data) {
+        document.getElementById('output').innerHTML +='msg incoming: '+JSON.stringify(data)+'<br>';
+      });
+      function register() {
+        var dataObj = {
+	  userAddress: document.getElementById('userAddress').value,
+	  secret: document.getElementById('secret').value
+	};
+        socket.emit('register', dataObj);
+        console.log('emitted register '+dataObj.userAddress);
+      }
+      function send() {
+        var dataObj = {
+	  to: document.getElementById('to').value,
+	  msg: document.getElementById('msg').value
+	};
+        socket.emit('msg', dataObj);
+        console.log('emitted msg '+JSON.stringify(dataObj));
+      }
+    </script>
+  </head>
+  <body>
+    <input id="secret"><input id="userAddress"><input value="send" type="submit" onclick="register();">
+    <div id="output"></div>
+    <input id="msg"><input id="to"><input value="send" type="submit" onclick="send();">
+  </body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Opentabs.net wire frames</title>
+  <meta charset="utf8">
+  <link rel="stylesheet" type="text/css" href="minimal.css">
+  <script src="http://opentabs.net:9000/socket.io/socket.io.js"></script>
+  <script src="http://opentabs.net/backend.js"></script>
+  <script src="http://opentabs.net/msg.js"></script>
+  <script src="http://opentabs.net/biz.js"></script>
+  <script>
+// structure: 
+// presentation: css,html, hide/show logic, from:
+// list of user addresses from filter,
+// messages come in, how do they trigger DOM updates?
+// frontend <-> backend <-> msg <-> hub <-> msg <-> app <-> biz <-> pres
+// fronted provides draw(userAddress) function to biz
+// keep everything in the dom all the time, just hide things.
+// controller interface:
+//   init(updateView(contactId, data))
+//   setUserAddress(userAddress)
+//   setSecret(secret)
+//   addContact(userAddress)
+//   borrow(contactId, amount, currency, description)
+//   lend(contactId, amount, currency, description)
+//   tabAction(contactId, tabId, action)
+
+// tab module:
+//   init(updateContact(contactId, data))
+//   setUserAddress(userAddress)
+//   addContact(userAddress)
+//   addTab(contactId, tab)
+//   updateTab(contactId, tabId, tab) 
+
+// message module:
+//   init(userAddress, secret, receiveMessage)
+//   sendMsg(recipient, data)
+
+// user module:
+//   getCharacters
+//   getName
+//   getAvatar
+//   getOnline
+
+       //////////////
+      // frontend //
+     //////////////
+    function borrowA(i) {
+      document.getElementById('contactButtons'+i).style.display='none';
+      document.getElementById('borrowDialog'+i).style.display='block';
+      document.getElementById('borrowInput'+i).focus();
+    }
+    function lendA(i) {
+      document.getElementById('contactButtons'+i).style.display='none';
+      document.getElementById('lendDialog'+i).style.display='block';
+      document.getElementById('lendInput'+i).focus();
+    }
+    function cancelBB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('borrowDialog'+i).style.display='none';
+    }
+    function cancelLB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('lendDialog'+i).style.display='none';
+    }
+    function borrowB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('borrowDialog'+i).style.display='none';
+      opentabs.sendTab(i, 'borrow', document.getElementById('borrowInput'+i).value);
+      showContacts();
+    }
+    function lendB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('lendDialog'+i).style.display='none';
+      opentabs.sendTab(i, 'lend', document.getElementById('lendInput'+i).value);
+      showContacts();
+    }
+    function hasLastCommentFromMe(tab) {
+      return false;
+    }
+    function hasLastCommentFromPeer(tab) {
+      return false;
+    }
+    function isSignedByMe(tab) {
+      return true;
+    }
+    function isSignedByPeer(tab) {
+      return false;
+    }
+    
+    function showContacts(filter) {
+      var contacts = opentabs.getContacts(filter);
+      document.getElementById('contacts').innerHTML='';
+      for(var i in contacts) {
+        var li = document.createElement('li');
+        li.setAttribute('class', 'contact');
+        li.innerHTML=
+          '<div id="summary" class="summary">'
+          +'  <div class="avatar">'
+          +'    <img src="'+contacts[i].avatar+'">'
+          +'  </div>'
+          +'  <div>'
+          +'    '+contacts[i].name
+          +'  </div>'
+          +'  <br>'
+          +'  <div class="contactButtons" id="contactButtons'+i+'">'
+          +'      <input type="submit" value="borrow" onclick="borrowA('+i+');">'
+          +'      <input type="submit" value="lend" onclick="lendA('+i+');">'
+          +'  </div>'
+          +'  <form class="contactDialog" id="borrowDialog'+i+'">'
+          +'    <input id="borrowInput'+i+'">'
+          +'    <input type="submit" value="Borrow" class="borrowButton" onclick="borrowB('+i+');">'
+          +'    <input type="submit" value="x" class="cancelButton" onclick="cancelBB('+i+');">'
+          +'  </form>'
+          +'  <form class="contactDialog" id="lendDialog'+i+'">'
+          +'    <input id="lendInput'+i+'">'
+          +'    <input type="submit" value="Lend" class="lendButton" onclick="lendB('+i+');">'
+          +'    <input type="submit" value="x" class="cancelButton" onclick="cancelLB('+i+');">'
+          +'  </form>'
+          +'</div>';
+        var tabLists = makeTabLists(contacts[i].tabs);
+        if(tabLists.notif.length) {
+           var notifs = '<div class="notifList"><h4>Notif:</h4><ul>';
+          for(var j in tabLists.notif) {
+            notifs += '<li>'+tabLists.notif[j].icon+tabLists.notif[j].description+'</li>';
+          }
+          li.innerHTML += notifs+'</ul></div>';
+        }
+        if(tabLists.track.length) {
+           var tracks = '<div class="trackList"><h4>Track:</h4><ul>';
+          for(var j in tabLists.track) {
+            tracks += '<li>'+tabLists.track[j].icon+tabLists.track[j].description+'</li>';
+          }
+          li.innerHTML += tracks+'</ul></div>';
+        }
+        document.getElementById('contacts').appendChild(li);
+      }
+      document.getElementById('loggedInAs').innerHTML=opentabs.getMe().userAddress;
+    }
+    function enter(userAddress) {
+      var secret=document.getElementById('secret').value;
+      localStorage.setItem('secret', secret);
+      msg.init(userAddress, secret, function(data) {
+        alert('please enter our secret word at the top, not "'+data+'"!');
+      }, function(data) {
+        opentabs.processMsg(data, showContacts);
+      }, function(data) {
+        document.getElementById('login').style.display='none';
+        document.getElementById('mainView').style.display='block';
+        var nick = data.split('@')[0];
+        var me = {
+           name: nick,
+           userAddress: data,
+           avatar: 'http://opentabs.net/screens/avatars/'+nick
+        };
+        opentabs.setMe(me);
+	showContacts();
+      });
+    }
+    function bodyOnLoad() {
+      if(msg.isConnected()) {
+        document.getElementById('login').style.display='none';
+        document.getElementById('mainView').style.display='block';
+        showContacts();
+      } else {
+        if(localStorage.getItem('secret') && localStorage.getItem('me')) {
+          document.getElementById('secret').value=localStorage.getItem('secret');
+          var me= JSON.parse(localStorage.getItem('me'))
+          enter(me.userAddress);
+        } else {
+          msg.getCharacters(function(characters) {
+            var str = '<table><tr>';
+            for(var i in characters) {
+              str += '<td onclick="enter(\''
+                +characters[i].userAddress+'\');"><div class="avatarBig"><img src="'
+                +characters[i].avatar+'"><br><h2>'
+                +characters[i].name+'</h2></div></td>';
+            }
+            document.getElementById('characters').innerHTML= str+'</tr></table>';
+          });
+        }
+      }
+    }
+  </script>
+</head>
+<body onload="bodyOnLoad();">
+<div class="main">
+<article class="feedbackBar">
+<input type="submit" value="reset" onclick="localStorage.clear();window.location='';">
+<span id="loggedInAs"></span>
+</article>
+<article class="login" id="login">
+  Our secret word: <input id="secret"><br>
+  Get into character:<br>
+  <div id="characters"></div>
+</article>
+<article class="mainView" id="mainView">
+  <header>
+    <div class="searchBoxA">
+      Search/add:
+      <input size="3" onkeyup="showContacts(this.value);">
+    </div>
+  </header>
+  <ul class="contacts" id="contacts">
+  </ul>
+</article>
+</div>
+</body>
+</html>

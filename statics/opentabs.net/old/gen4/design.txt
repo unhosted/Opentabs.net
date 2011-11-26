@@ -1,0 +1,21 @@
+contact [userAddress, name, avatar]
+  tab [currency]
+    iou [borrower, lender, amount, currency, timestamp], signatures //signatures: propose,accept,decline,remind
+    ...
+  ...
+...
+
+messages= {
+  from: 'a@b',
+  to: 'c@d',
+  verb: ('propose'/'accept'/'decline'/'remind'),
+  iou: {
+    borrower: ...,
+    lender: ...,
+    amount: ...,
+    currency: ...,
+    timestamp: ...
+  },
+  signature: ...,
+  comment: ...
+};

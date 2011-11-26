@@ -1,0 +1,9 @@
+.feedbackBar {border-style:solid;border-radius:5px;border-width:1px;}
+.mainView header {border-style:solid;border-radius:5px;border-width:1px;}
+.settings,.settingsIcon {display:inline;float:right}
+.mainView {width:380px}
+
+.mainView,.charactersForm {display:none}
+.avatar,.avatarBig {float:left}
+.avatar img {width:50px;height:50px;}
+.avatarBig img {width:150px;height:150px;}

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Opentabs.net wire frames</title>
+  <meta charset="utf8">
+  <link rel="stylesheet" type="text/css" href="minimal.css">
+  <script>
+      /////////////
+     // backend //
+    /////////////
+    var opentabs = (function() {
+      function generateAlphaIdentities() {
+        var contacts = [
+         { name: 'Zed' },
+         { name: 'Vincent' },
+         { name: 'Fabienne'},
+         { name: 'Wolf' },
+         { name: 'Jules' },
+         { name: 'Marcellus' },
+         { name: 'Mia' },
+       ];
+       for(var i in contacts) {
+         contacts[i].avatar = 'http://opentabs.net/screens/avatars/'
+           +contacts[i].name.toLowerCase();
+         contacts[i].userAddress = contacts[i].name.toLowerCase()+'@opentabs.net';
+	 contacts[i].tabs = [];
+       }
+       return contacts;
+     }
+     function setContacts(contacts) {
+       localStorage.contacts = JSON.stringify(contacts);
+     }
+     function getContacts(filter) {
+       if(!localStorage.contacts) {
+         setContacts(generateAlphaIdentities());
+       }
+       var contacts = JSON.parse(localStorage.contacts);
+       if(filter && filter.length) {
+	 var filtered = {};
+         for(var i in contacts) {
+           var prefix = contacts[i].name.substring(0, filter.length);
+           if(prefix.toLowerCase() == filter.toLowerCase()) {
+             filtered[i]=contacts[i];
+           }
+         }
+	 return filtered;
+       } else {
+         //return contacts;
+	 var filtered = {};
+         for(var i in contacts) {
+           filtered[i]=contacts[i];
+	 }
+	 return filtered;
+       }
+     }
+     function getMe() {
+       return {
+         name: 'Butch',
+         userAddress: 'butch@opentabs.net',
+         avatar: 'http://opentabs.net/screens/avatars/butch'
+       }
+     }
+     function getContact(contactId) {
+       var contacts = getContacts();
+       return contacts[contactId]
+     }
+     function addTab(contactId, tab) {
+       var contacts = getContacts();
+       contacts[contactId].tabs.push(tab);
+       setContacts(contacts);
+     }
+     function sendTab(contactId, type, description) {
+       var tab = {};
+       if(type == 'borrow') {
+         tab.payee = getContact(contactId).userName;
+         tab.payer = getMe().userName;
+       } else {
+         tab.payer = getContact(contactId).userName;
+         tab.payee = getMe().userName;
+       }
+       tab.description = description;
+       tab.timestamp = (new Date().getTime());
+       var me = getMe().userAddress;
+       tab.signatures = {me: 'yours truly'}
+       addTab(contactId, tab);
+     }
+     return {
+       getContacts: getContacts,
+       sendTab: sendTab
+     }
+   })();
+
+       //////////////
+      // frontend //
+     //////////////
+    function borrowA(i) {
+      document.getElementById('contactButtons'+i).style.display='none';
+      document.getElementById('borrowDialog'+i).style.display='block';
+      document.getElementById('borrowInput'+i).focus();
+    }
+    function lendA(i) {
+      document.getElementById('contactButtons'+i).style.display='none';
+      document.getElementById('lendDialog'+i).style.display='block';
+      document.getElementById('lendInput'+i).focus();
+    }
+    function cancelBB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('borrowDialog'+i).style.display='none';
+    }
+    function cancelLB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('lendDialog'+i).style.display='none';
+    }
+    function borrowB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('borrowDialog'+i).style.display='none';
+      opentabs.sendTab(i, 'borrow', document.getElementById('borrowInput'+i).value);
+      showContacts();
+    }
+    function lendB(i) {
+      document.getElementById('contactButtons'+i).style.display='block';
+      document.getElementById('lendDialog'+i).style.display='none';
+      opentabs.sendTab(i, 'lend', document.getElementById('lendInput'+i).value);
+      showContacts();
+    }
+    function hasLastCommentFromMe(tab) {
+      return false;
+    }
+    function hasLastCommentFromPeer(tab) {
+      return false;
+    }
+    function isSignedByMe(tab) {
+      return true;
+    }
+    function isSignedByPeer(tab) {
+      return false;
+    }
+    function makeTabLists(tabs) {
+      //basic tab: {payer, payee, amount, currency, timestamp}, signatures, comments.
+      //here is the business logic that adds 'status'
+      var _statuses = {
+        'pendingIn': 0,//'?' - accept, decline
+        'declinedOut': 1,//'X' - close
+        'hurryB': 2,//(open and last comment is from payee & viewer is payer) '!', red
+        'sentL': 3,//'tick' - 'confirm'
+        
+	//track:
+        'pendingOut': 4,// '?' - cancel
+        'hurryL': 5,//(open and last comment is from payee & viewer is payee); '!', green
+
+        //open:
+        'declinedIn': 6,//'X' -
+        'openB': 7,//'' - 'Settled'
+        'openL': 7,//'' - 'Remind/Settled'
+        'sentB': 8,//'tick'
+
+        //history:
+        'closed': 9,//''
+        'settled': 10//''
+      };
+      var lists = {
+        notif: [],
+	track: [],
+	open: [],
+	history: []
+      };
+      for(var i in tabs) {
+        var tab = tabs[i];
+	if(isSignedByMe(tab)) {
+	  if(isSignedByPeer(tab)) {
+	    if(payeeIsMe(tab)) {
+	      if(hasLastMessageFromMe(tab)) {
+	        tab.status=_statuses.hurryL;//BLM
+		tab.icon='! L';
+              } else if(hasLastMessageFromPeer(tab)) {
+	        tab.status=_statuses.sentL;//BLT
+		tab.icon='v L';
+	      } else {
+	        tab.status=_statuses.openL;//BLN
+		tab.icon='L';
+	      }
+	    } else {
+	      if(hasLastMessageFromPeer(tab)) {
+	        tab.status=_statuses.hurryB;//BBT
+		tab.icon='! B';
+              } else if(hasLastMessageFromMe(tab)) {
+	        tab.status=_statuses.sentB;//BBM
+		tab.icon='v B';
+	      } else {
+	        tab.status=_statuses.openB;//BBN
+		tab.icon='B';
+	      }
+	    }
+	  } else {
+            if(hasLastCommentFromPeer(tab)) {
+	      tab.status=_statuses.declinedOut;//MT
+	      tab.icon='X O';
+	    } else {
+	      tab.status=_statuses.pendingOut;//MN
+	      tab.icon='? O';
+	    }
+          }
+	} else {
+	  if(hasLastCommentFromMe(tab)) {
+	    tab.status=_statuses.declinedIn;//TM
+	    tab.icon='X I';
+	  } else {
+	    tab.status=_statuses.pendingIn;//TN
+	    tab.icon='? I';
+	  }
+	}
+	if(tab.status<4) {
+	  lists.notif.push(tab);
+        } else if(tab.status<7) {
+	  lists.track.push(tab);
+        } else if(tab.status<9) {
+	  lists.open.push(tab);
+	} else {
+	  lists.history.push(tab);
+	}
+      }
+      return lists;
+    }
+    
+    function showContacts(filter) {
+      var contacts = opentabs.getContacts(filter);
+      document.getElementById('contacts').innerHTML='';
+      for(var i in contacts) {
+        var li = document.createElement('li');
+        li.setAttribute('class', 'contact');
+        li.innerHTML=
+          '<div id="summary" class="summary">'
+          +'  <div class="avatar">'
+          +'    <img src="'+contacts[i].avatar+'">'
+          +'  </div>'
+          +'  <div>'
+	  +'    '+contacts[i].name
+          +'  </div>'
+          +'  <br>'
+          +'  <div class="contactButtons" id="contactButtons'+i+'">'
+          +'      <input type="submit" value="borrow" onclick="borrowA('+i+');">'
+          +'      <input type="submit" value="lend" onclick="lendA('+i+');">'
+          +'  </div>'
+          +'  <div class="contactDialog" id="borrowDialog'+i+'">'
+          +'    <input id="borrowInput'+i+'">'
+          +'    <input type="submit" value="Borrow" class="borrowButton" onclick="borrowB('+i+');">'
+          +'    <input type="submit" value="x" class="cancelButton" onclick="cancelBB('+i+');">'
+          +'  </div>'
+          +'  <div class="contactDialog" id="lendDialog'+i+'">'
+          +'    <input id="lendInput'+i+'">'
+          +'    <input type="submit" value="Lend" class="lendButton" onclick="lendB('+i+');">'
+          +'    <input type="submit" value="x" class="cancelButton" onclick="cancelLB('+i+');">'
+          +'  </div>'
+          +'</div>';
+        var tabLists = makeTabLists(contacts[i].tabs);
+	if(tabLists.notif.length) {
+	   var notifs = '<div class="notifList"><h4>Notif:</h4><ul>';
+          for(var j in tabLists.notif) {
+            notifs += '<li>'+tabLists.notif[j].icon+tabLists.notif[j].description+'</li>';
+	  }
+	  li.innerHTML += notifs+'</ul></div>';
+	}
+	if(tabLists.track.length) {
+	   var tracks = '<div class="trackList"><h4>Track:</h4><ul>';
+          for(var j in tabLists.track) {
+            tracks += '<li>'+tabLists.track[j].icon+tabLists.track[j].description+'</li>';
+	  }
+	  li.innerHTML += tracks+'</ul></div>';
+	}
+        document.getElementById('contacts').appendChild(li);
+      }
+    }
+    function bodyOnLoad() {
+      showContacts();
+    }
+  </script>
+</head>
+<body onload="bodyOnLoad();">
+<div class="main">
+<article class="mainView">
+  <header>
+    <div class="searchBoxA">
+      Search/add:
+      <input size="3" onkeyup="showContacts(this.value);">
+    </div>
+  </header>
+  <ul class="contacts" id="contacts">
+  </ul>
+</article>
+</div>
+</body>
+</html>

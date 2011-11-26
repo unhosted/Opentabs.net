@@ -1,0 +1,45 @@
+user stories (in order of decreasing importance):
+-------------------------------------------------
+1 - quickly send an IOU to someone who's likely to be physically near, but might not have checked in, and might not even be registered. Start typing user address, it fills in. then a dialog with amount, currency, description.
+2 - receive a notification that requires an action: it shows at the top, also triggers a desktop/phone notif if the apps's not in focus.
+3 - find a specific tab you know exists, and mark it as paid:sub-story of 6. it's natural to see a per-peer overview before settling anything. there should also be a natural way to receive partial or over-payment, so if you have the per-peer overview open, it should probably say 'settle' and then 'I paid' or 'I received', and these should show up in the history as payments, not IOUs. but if you mark one entire IOU as paid, then maybe a payment entry should go into history and they should have a link to each other. 'Settled their <17 Oct> tab'
+4 - see an overview of your situation: per currency, peer-totals, red to green. click on peer-total to list history of description -> amount.
+5 - find a specific tab you know exists, and request payment.
+6 - check whether you're cool with a specific peer: the 'open new tab' list also displays a per-peer totals summary. click on it to see bigger, complete, per-peer-per-currency totals, with a description->amount+currency list hanging from it.
+
+see http://opentabs.net/mainMenu.html and http://opentabs.net/mainMenuWNotif.html
+
+clicking on a name should open /both/ the new tab dialog and the per-peer list.
+
+
+09:09 < JanCBorchardt> history should not be a separated view but collapsed by 
+              default
+09:10 < JanCBorchardt> exactly, no "tabs" ;)
+09:10 < JanCBorchardt> and yeah, images, profile images, that would be awesome
+09:10 < JanCBorchardt> a photo, the "user" part of the user address, a (+) and 
+                     the total balance
+09:10 < JanCBorchardt> that is a row of the user
+09:10 < JanCBorchardt> and it needs to be a table, not a list
+09:10 < michielbdejong_> can you mock that up in html?
+09:11 < michielbdejong_> or you have a scanner there?
+09:11 < michielbdejong_> we are now already so far advanced that we need new 
+                      wire frames, i would say
+09:12 < JanCBorchardt> <tr id="mich@unhosted.org"><td (click this to add a new 
+                     tab)>photo Name</td><td (click this to expand 
+                    all)>Total</td></tr>
+09:12 < michielbdejong_> or let me mock it up, and then you can comment on it
+09:12 < JanCBorchardt> no, this line
+09:12 < JanCBorchardt> is one contact
+09:12 < JanCBorchardt> and then, each transaction:
+09:13 < JanCBorchardt> <tr id="[transactionID]"><td>Reason</td><td (this gets 
+                   colored)>Amount Currency</td></tr>
+09:13 < JanCBorchardt> and when clicking the row, the buttons "mark as paid" or 
+                  else appear
+09:13 < JanCBorchardt> bbl
+
+
+at the top: importants, one-by-one.
+then: a box with contacts who are close (if any)
+then: other contact avatars with at least one open tab, 4 columns.
+then: all other contacts
+then: ellipsis.

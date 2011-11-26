@@ -1,0 +1,6 @@
+.feedbackBar {border-style:solid;border-radius:5px;border-width:1px;}
+.mainView {display:none}
+.avatar,.avatarBig {float:left}
+.avatar img {width:50px;height:50px;}
+.avatarBig img {width:150px;height:150px;}
+.contactDialog {display:none}

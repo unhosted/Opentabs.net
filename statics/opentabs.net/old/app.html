@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Opentabs.net app</title>
+    <link rel="stylesheet" type="text/css" href="app.css">
+    <script src="IOU.js"></script>
+    <script src="http://opentabs.net:9000/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect('http://opentabs.net:9000');
+      
+      var nicks = ['andrew','daniel','dietrich','jan','javi','kenny','mich'];
+      //listen client-side:
+      socket.on('welcome', function (data) {
+        document.getElementById('login').style.display='none';
+        document.getElementById('loggedInAs').innerHTML=
+	  'You are <span class="avatar">'+data[0]+'</span>'+data;
+        for(var i in nicks) {
+          if(nicks[i]+'@opentabs.net'!=you) {
+            addContact(nicks[i]+'@opentabs.net');
+          }
+        }
+        show();
+      });
+      socket.on('msg', function (data) {
+        storeTab(data.msg);
+        show();
+      });
+      function register() {
+        var dataObj = {
+          userAddress: document.getElementById('nick').value+'@opentabs.net',
+          secret: document.getElementById('secret').value
+        };
+        you = document.getElementById('nick').value+'@opentabs.net';
+        localStorage.setItem('nick', document.getElementById('nick').value);
+        
+        localStorage.setItem('secret', document.getElementById('secret').value);
+        socket.emit('register', dataObj);
+        console.log('emitted register '+dataObj.userAddress);
+      }
+      function sendMsg(to, msg) {
+        var dataObj = {
+          to: to,
+          msg: msg
+        };
+        socket.emit('msg', dataObj);
+        console.log('emitted msg '+JSON.stringify(dataObj));
+      }
+
+
+    function calcSignature(digest, keyPair) {
+      return "yours truly";
+    }
+    function sha1(orig) {
+      return 'sha1-asdfasdfasdfasdf';
+    }
+
+    function createTab(payer, payee, amount, currency, timestamp, otherFields, keyPair) {
+      var obj = {
+        payer: payer,
+        payee: payee,
+        status: 'proposed',
+        proposer: keyPair.userAddress,
+        amount: amount,
+        currency: currency};
+      obj.statement = "At timestamp "+timestamp+", "+payer+" starts owing "+payee+" an additional "+amount+" "+currency;
+      obj.signatures = {};
+      obj.signatures[keyPair.userAddress] = calcSignature(obj.statement, keyPair);
+      for(var fieldName in otherFields) {
+        obj[fieldName] = otherFields[fieldName];
+      }
+      return obj;
+    }
+    function el(el) {
+      return document.getElementById(el);
+    }
+    function val(el) {
+      try {
+        return document.getElementById(el).value;
+      } catch(e) {
+        alert(JSON.stringify(e));
+      }
+    }
+    function switchDirection() {
+      if(val('direction')=='they owe') {
+        document.getElementById('direction').value='you owe';
+        document.getElementById('direction').className='negative';
+      } else {
+        document.getElementById('direction').value='they owe';
+        document.getElementById('direction').className='positive';
+      }
+    }
+    function addContact(userAddress) {
+      var contacts = localStorage.getItem('contacts');
+      if(contacts == null) {
+        contacts = '[]';
+      }
+      contacts = JSON.parse(contacts);
+      for(var i in contacts) {
+        if(contacts[i]==userAddress) {
+          return i;
+        }
+      }
+      contacts.push(userAddress);
+      contacts = JSON.stringify(contacts);
+      localStorage.setItem('contacts', contacts);
+      return (contacts.length - 1);
+    }
+    function owe(i) {
+      var peer = el('contact'+i).innerHTML;
+      if(i==-1) {
+        peer = el('contact'+i).value;//inputs use .value instead of .innerHTML
+        if(peer=='') {
+          alert('please enter the user address of the person you want to open a tab with');
+          return;
+        } else {
+          var newIndex = addContact(peer);
+          document.getElementById('contactsDiv').innerHTML = getContactsString();
+          //this doesn't update on time: FIXME 
+          //owe(newIndex);
+          return;
+        }
+      }
+      timestamp = (new Date().getTime());
+      document.getElementById('add'+i).innerHTML = '<td>'
+          +'<input type="text" size="10" id="description'+i+'" placeholder="Reason" />'
+          +'<input class="negative" type="submit" value="you owe" id="direction" onclick="switchDirection();" />'
+          +'<input type="text" size="5" id="amount'+i+'" placeholder="amount" />'
+          +'<input type="submit" id="currency'+i+'" value="&euro;" /></span>'
+          +'</td>'
+          +'<td><input type="submit" value="Send" onclick="send('+i+');" /></td>';
+    }
+
+    function cancel(i) {
+      document.getElementById('contactsDiv').innerHTML = getContactsString();
+    }
+    function send(i) {
+      var payer, payee;
+      if(val('direction')=='they owe') {
+        payer=el('contact'+i).innerHTML;
+        payee=you;
+      } else {
+        payer=you;
+        payee=el('contact'+i).innerHTML;
+      }
+      sign(el('contact'+i).innerHTML, payer, payee, i);
+    }
+    function sign(recipient, payer, payee, i) {
+      var keyPair = {n: 1, d:1, p:1, q:1, userAddress:you};
+      var tab = createTab(payer, payee, val('amount'+i), val('currency'+i), timestamp,
+        {
+          description: val('description'+i),
+          location: 'Berlin'
+        },
+        keyPair);
+      tab.sender=you;
+      tab.recipient=recipient;
+      storeTab(tab);
+      sendMsg(tab.recipient, tab);
+      cancel(i);
+      show();
+    }
+    function storeTab(tab) {
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      if(tabs == null) {
+        tabs = [];
+      }
+      for(var i in tabs) {
+        if((tabs[i].payer == tab.payer) &&
+           (tabs[i].payee == tab.payee) &&
+           (tabs[i].amount == tab.amount) &&
+           (tabs[i].currency == tab.currency) &&
+           (tabs[i].timestamp == tab.timestamp)) {
+	  tabs[i]=tab;
+          localStorage.setItem('tabs', JSON.stringify(tabs));
+          return;
+	}
+      }
+      //not found; add as new:
+      tabs.push(tab);   
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+    }
+    function addNewTab() {
+      document.getElementById('newTab').innerHTML= ''
+        +'<input type="text" id="contact-1" placeholder="user@host" />'
+        +'<input type="submit" value="+" onclick="owe(-1);" />';
+        // this needs the same code like in owe(), line 84
+    }
+    function declineIncoming(i) {
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      tabs[i].status = 'declined';
+      tabs[i].message = 'nobody owes anything here, pay it forward!';
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+      sendMsg(tabs[i].sender, tabs[i]);
+      show();
+    }
+    function closeDeclined(i) {
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      tabs[i].status = 'closed';
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+      sendMsg(tabs[i].recipient, tabs[i]);
+      show();
+    }
+    function acceptIncoming(i) {
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      tabs[i].signatures[you]=calcSignature(null, null);
+      tabs[i].status = 'accepted';
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+      sendMsg(tabs[i].sender, tabs[i]);
+      show();
+    }
+
+    function show() {
+      document.getElementById('importantDiv').innerHTML = getImportantString();
+      document.getElementById('contactsDiv').innerHTML = getContactsString();
+      document.getElementById('historyDiv').innerHTML = getHistoryString();
+    }
+    function bodyonload() {
+      show();
+      if((localStorage.getItem('nick')) && (localStorage.getItem('secret'))) {
+        document.getElementById('nick').value=localStorage.getItem('nick');
+        document.getElementById('secret').value=localStorage.getItem('secret');
+        register();
+      }
+    }
+    function fold(i) {
+      document.getElementsByClassName('folded'+i).style.display='none';
+    }
+    function markAsPaid(i) {
+      var you = localStorage.getItem('you');
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      if(tabs[i].payer==you) {
+        tabs[i].status='sent';
+        sendMsg(tabs[i].payee, tabs[i]);
+      } else {
+        tabs[i].status='received';
+        sendMsg(tabs[i].payer, tabs[i]);
+      }
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+      show();
+    }
+    function cancelProposed(i) {
+      var you = localStorage.getItem('you');
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      tabs[i].status='canceled';
+      sendMsg(tabs[i].recipient, tabs[i]);
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+      show();
+    }
+    function requestPayment(i) {
+      var you = localStorage.getItem('you');
+      var tabs = JSON.parse(localStorage.getItem('tabs'));
+      tabs[i].status='requested';
+      sendMsg(tabs[i].payer, tabs[i]);
+      localStorage.setItem('tabs', JSON.stringify(tabs));
+      show();
+    }
+      
+  </script>
+  </head>
+  <body onload="bodyonload();">
+    <div id="login">
+      <p><input type="text" id="nick" placeholder="Nickname" size="6" />@opentabs.net
+      <input type="text" id="secret" placeholder="Secret word" size="8" />
+      <input type="submit" value="Test" onclick="register();" /></p>
+      <p><strong>This is an alpha test</strong>, only these names are valid:<br />
+      andrew, daniel, dietrich, jan, javi, kenny, mich</p>
+    </div>
+      <div id="newTab">
+        <span id="loggedInAs"></span>
+        <input type="submit" value="Open a Tab" onclick="addNewTab();" />
+      </div>
+      <div id="importantDiv"></div>
+      <div id="contactsDiv"></div>
+      <div id="historyDiv"></div>
+  </body>
+</html>

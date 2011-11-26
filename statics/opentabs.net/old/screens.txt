@@ -1,0 +1,36 @@
+- alpha tester login
+- main menu first use
+- open a tab IOU
+- IOU sent
+	- IOU accepted
+		- IOU paid
+		- IOU payment confirmed
+
+		- IOU payment requested
+
+		- IOU settle
+	
+	- IOU declined
+
+- open a tab invoice
+- invoice sent
+	- invoice accepted
+		- payment claimed
+		- payment confirmed
+
+		- invoice request payment
+
+		- invoice settle
+
+	- invoice declined
+
+- invoice received
+	- accept invoice
+	- decline invoice
+
+- IOU received
+	- accept IOU
+	- decline IOU
+
+- click 'overview'
+- unfold contact

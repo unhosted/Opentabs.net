@@ -1,0 +1,37 @@
+experiment:
+use real couch instances per user
+
+message timeline:
+ [> propose]+
+  < ack
+ [< decline]+
+  > ack
+
+ [> propose]+
+  < ack
+ [< accept]+
+  > ack
+
+data structure for verbs 'propose', 'ack+decline', 'ack+accept', and if iou.diff==0, 'remind':
+tabs[userAddress][currency] = {ordered by timestamp, incr
+  timestamp: {
+    from: 'user@host',
+    to: 'user@host',
+    message: {
+      verb: 'propose'/'decline'/'accept'/'ack',
+      tab: {
+        borrower: 'user@host',
+        lender: 'user@host',
+        currency: 'USD',
+      },
+      revision: {
+        timestamp: 1234567890.123,
+        balance: 123.45//always positive, so that borrow vs. lender is uniquely defined. if zero, take direction from prev rev
+      },
+      previous: 1234567890.123/null,
+      comment: '...'
+    },
+    signature: '...' (pgp of utf-8 canonical json of message)
+  },
+  ...
+}

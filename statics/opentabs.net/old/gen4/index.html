@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="style/greycenter.css">
+    <script src="http://opentabs.net:9000/socket.io/socket.io.js"></script>
+    <!-- modules: -->
+    <script src="modules/msg.js"></script>
+    <script src="modules/crypto.js"></script>
+    <script src="modules/tabs.js"></script>
+    <script src="modules/contacts.js"></script>
+    
+    <!-- controller: -->
+    <script src="controller.js"></script>
+    
+    <!-- views: -->
+    <script src="views/contact.js"></script>
+    
+    <script>
+      function updateView(userAddress, obj) {
+        var idStr = 'contact_'+obj.userAddress.replace('@', ':');
+        if(document.getElementById(idStr)) {
+          document.getElementById(idStr).innerHTML=
+            contactView.renderContact(obj);
+        } else {
+          var div = document.createElement('div');
+          div.setAttribute('id', idStr);
+          div.innerHTML=
+            contactView.renderContact(obj, idStr);
+          document.getElementById('contacts').appendChild(div);
+        }
+      }
+      function onBodyLoad() {
+        controller.setCallbacks({
+          onSecretErr: function(data) {
+            alert('wrong!');
+            localStorage.removeItem('secret');
+            document.getElementById('secret').value='';
+          },
+          onSecretOK: function(data) {
+            document.getElementById('secretForm').style.display='none';
+            if(localStorage.userAddress) {
+              controller.setUserAddress(localStorage.userAddress, localStorage.secret);
+            } else {
+              controller.getCharacters(function(characters) {
+                var str = '<table><tr>';
+                for(var i in characters) {
+                  var character = contacts.getUser(characters[i]);
+                  str += '<td onclick="enter(\''
+                    +character.userAddress+'\');"><div class="avatarBig"><img src="'
+                    +character.avatar+'"><br><h2>'
+                    +character.name+'</h2></div></td>';
+                }
+                document.getElementById('characters').innerHTML= str+'</tr></table>';
+              });
+              document.getElementById('charactersForm').style.display='block';
+            }
+          },
+          onErr: function(data) {
+            alert('disconnected!');
+            localStorage.removeItem('userAddress');
+            document.getElementById('charactersForm').style.display='block';
+          },
+          onWelcome: function(data) {
+            //document.getElementById('secretForm').style.display='none';
+            document.getElementById('charactersForm').style.display='none';
+            document.getElementById('mainView').style.display='block';
+          }
+        });
+        controller.init(updateView);
+        if(localStorage.secret) {
+          controller.testSecret(localStorage.secret);
+        }
+      }
+      function showSettings() {
+        document.getElementById('settings').innerHTML = 
+          '<div onclick="hideSettings();">Logged in as:<br>'
+            +localStorage.userAddress+'</div>';
+        document.getElementById('settings').style.display='block';
+        document.getElementById('settingsIcon').style.display='none';
+      }
+      function hideSettings() {
+        document.getElementById('settings').style.display='none';
+        document.getElementById('settingsIcon').style.display='block';
+      }
+      function submitReset(e) {
+        e.preventDefault();
+        localStorage.clear();
+        window.location='';
+      }
+      function submitSecret(e) {
+        e.preventDefault();
+        var secret = document.getElementById('secret').value;
+        localStorage.setItem('secret', secret);
+        controller.testSecret(secret);
+      }
+      function enter(userAddress) {
+        localStorage.setItem('userAddress', userAddress);
+        controller.setUserAddress(userAddress, localStorage.secret);
+      }
+    </script>
+  </head>
+  <body onload="onBodyLoad();">
+    <div class="feedbackBar" id="feedbackBar">
+      <input type="submit" value="reset" onclick="submitReset(event);">
+    </div>
+    <div class="secretForm" id="secretForm">
+      Our secret word:
+      <input id="secret">
+      <input type="submit" onclick="submitSecret(event);">
+    </div>
+    <div class="charactersForm" id="charactersForm">
+      Let's get into character:
+      <div id="characters">
+      </div>
+    </div>
+    <div class="mainView" id="mainView">
+      <header>
+        <span>
+          Search/add:<input>
+        </span>
+        <span class="settings" id="settings">
+        </span>
+        <div class="settingsIcon" id="settingsIcon" onclick="showSettings();">
+          <h2>*</h2>
+        </div>
+      </header>
+      <div class="contacts" id="contacts">
+      </div>
+    </div>
+  </body>
+</html>
