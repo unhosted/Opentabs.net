@@ -8,5 +8,8 @@
   "scripts": {
     "start": "server.js"
   },
-  "version": "0.0.0-3"
+  "version": "0.0.0-4",
+  "dependencies": {
+    "socket.io": "0.8.7"
+  }
 }
