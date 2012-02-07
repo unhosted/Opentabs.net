@@ -1,6 +1,6 @@
 var http = require('http'),
   url = require('url'),
-  sockethub = require('./sockethub'),//requiring this executes code that opens a port
+  //sockethub = require('./sockethub'),//requiring this executes code that opens a port
   path = require('path'),
   fs = require('fs'),
   config = require('./config').config;
