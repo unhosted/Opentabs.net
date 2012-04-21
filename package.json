@@ -1,6 +1,6 @@
 {
-  "name": "Opentabs.net",
-  "subdomain": "opentabs",
+  "name": "opentabs-net",
+  "subdomain": "opentabs-net",
   "domains": [
     "opentabs.net",
     "www.opentabs.net"
@@ -8,5 +8,8 @@
   "scripts": {
     "start": "server.js"
   },
-  "version": "0.0.0-7"
+  "version": "0.0.0-9",
+  "engines": {
+    "node": "0.6.x"
+  }
 }
