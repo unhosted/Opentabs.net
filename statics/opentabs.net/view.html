@@ -1,9 +1,47 @@
 <html>
-  <head>
-    <script>
-      document.write(location.hash);
-    </script>
-  </head>
   <body>
+    <div id="transactions"></div>
   </body>
+  <script src="remoteStorage.js"></script>
+  <script>
+    function makeHtmlTable(items) {
+      if(!items.length) {
+        return '';
+      }
+      var str='<table><tr>';
+      for(field in items[0]) {
+        str+='<td>'+field+'</td>';
+      }
+      str+='</tr>';
+      for(var i=0; i<items.length; i++) {
+        str += '<tr>';
+        for(field in items[0]) {//take fields description from top item only
+          str+='<td>'+items[i][field]+'</td>';
+        }
+        str+='</tr>';
+      }
+      return str+'</table>';
+    }
+    function onLoad() {
+      var peer, item, parts = location.hash.substring(1).split('&');
+      for(var i=0; i<parts.length; i++) {
+        var partsParts = parts[i].split('=')
+        if(partsParts.length=2) {
+          console.log(partsParts[0]+':'+partsParts[1]);
+          if(partsParts[0]=='peer') {
+            peer = partsParts[1];
+          }
+          if(partsParts[0]=='item') {
+            item = partsParts[1];
+          }
+        }
+        if(peer && item) {
+          var data = remoteStorage.getPublicItem(peer, 'money', item);
+          console.log(data);
+          document.getElementById('transactions').innerHTML = makeHtmlTable(data);
+        }
+      }
+    }
+    onLoad();
+  </script>
 </html>
