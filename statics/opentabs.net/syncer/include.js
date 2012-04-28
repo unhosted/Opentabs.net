@@ -73,7 +73,7 @@ require(['./syncer/remoteStorage'], function(drop) {
     }
     //localStorage keys used by this lib:
     //_unhosted/userAddress
-    //_unhosted/categories
+    //_unhosted/paths
     //_unhosted/storageInfo
     //_unhosted/bearerToken
     
@@ -88,10 +88,10 @@ require(['./syncer/remoteStorage'], function(drop) {
     //for each [category]:
     //_unhosted/index:[category]
 
-    function connect(userAddress, categories, pullInterval, dialogPath) {
+    function connect(userAddress, paths, pullInterval, dialogPath) {
       ol('syncer.connect('
         +JSON.stringify(userAddress)+', '
-        +JSON.stringify(categories)+', '
+        +JSON.stringify(paths)+', '
         +JSON.stringify(pullInterval)+', '
         +JSON.stringify(dialogPath)+');');
       if(localStorage['_unhosted/bearerToken']) {
@@ -105,7 +105,7 @@ require(['./syncer/remoteStorage'], function(drop) {
         pullInterval = 60;
       }
       localStorage['_unhosted/userAddress'] = userAddress;
-      localStorage['_unhosted/categories'] = JSON.stringify(categories);
+      localStorage['_unhosted/paths'] = JSON.stringify(paths);
       localStorage['_unhosted/pullInterval'] = pullInterval;
       window.open(dialogPath);
       window.addEventListener('storage', function(event) {
@@ -207,7 +207,7 @@ require(['./syncer/remoteStorage'], function(drop) {
         //}
       });
     }
-    function pullCategory(storageInfo, category, bearerToken, cb) {//calls pullIn, then pushOut for a category
+    function pullPath(storageInfo, category, bearerToken, cb) {//calls pullIn, then pushOut for a category
       var client=remoteStorage.createClient(storageInfo, category, bearerToken);
       client.category = category;
       client.get('/', function(err, data) {
@@ -220,26 +220,26 @@ require(['./syncer/remoteStorage'], function(drop) {
         }
       });
     }
-    function pullCategories(storageInfo, categories, bearerToken, cb) {//calls pullCategory once for every category
-      if(categories.length) {
-        var thisCat=categories.shift();
-        pullCategory(storageInfo, thisCat, bearerToken, function() {
-          pullCategories(storageInfo, categories, bearerToken, cb);
+    function pullPaths(storageInfo, paths, bearerToken, cb) {//calls pullPath once for every category
+      if(paths.length) {
+        var thisCat=paths.shift();
+        pullPath(storageInfo, thisCat, bearerToken, function() {
+          pullPaths(storageInfo, paths, bearerToken, cb);
         });
       } else {
         cb();
       }
     }
-    function pull(cb) {//gathers settings and calls pullCategories
-      var categories, storageInfo, bearerToken;
+    function pull(cb) {//gathers settings and calls pullPaths
+      var paths, storageInfo, bearerToken;
       try {
-        categories=JSON.parse(localStorage['_unhosted/categories']);
+        paths=JSON.parse(localStorage['_unhosted/paths']);
         storageInfo=JSON.parse(localStorage['_unhosted/storageInfo']);
         bearerToken=localStorage['_unhosted/bearerToken'];
       } catch(e) {
       }
-      if(categories && storageInfo && bearerToken) {
-        pullCategories(storageInfo, categories, bearerToken, cb);
+      if(paths && storageInfo && bearerToken) {
+        pullPaths(storageInfo, paths, bearerToken, cb);
       }
     }
     function maybePull(now, cb) {
@@ -385,7 +385,7 @@ require(['./syncer/remoteStorage'], function(drop) {
         return [];
       }
     }
-    function display(barElement, categories, libDir, onChangeHandler) {
+    function display(barElement, paths, libDir, onChangeHandler) {
       if(libDir.length && libDir[libDir.length - 1] != '/') {//libDir without trailing slash
         libDir += '/'
       }
@@ -419,16 +419,16 @@ require(['./syncer/remoteStorage'], function(drop) {
           document.getElementById('remotestorage-status').style.display='none';
           document.getElementById('remotestorage-disconnected').style.display='block';
           document.getElementById('remotestorage-connect').onclick = function() {
-            connect(document.getElementById('remotestorage-useraddress').value, categories, 10, libDir+'dialog.html');
+            connect(document.getElementById('remotestorage-useraddress').value, paths, 10, libDir+'dialog.html');
           };
         }
       });
       onChange(onChangeHandler);
       //init all data:
-      for(var i=0; i < categories.length; i++) {
-        var thisColl = getCollection(categories[i]);
+      for(var i=0; i < paths.length; i++) {
+        var thisColl = getCollection(paths[i]);
         for(var key in thisColl) {
-          onChangeHandler({category: categories[i], key: key, newValue: getItem(categories[i], key), oldValue: undefined});
+          onChangeHandler({category: paths[i], key: key, newValue: getItem(paths[i], key), oldValue: undefined});
         }
       }
     }
@@ -444,7 +444,7 @@ require(['./syncer/remoteStorage'], function(drop) {
   })();
   //API:
   //
-  // - call display(barElement, categories, libDir, onChangeHandler({key:.., oldValue:.., newValue:..}));
+  // - call display(barElement, paths, libDir, onChangeHandler({key:.., oldValue:.., newValue:..}));
   // - getCollection retrieves the array of items regardless of their id (so it makes sense to store the id inside the item)
   // - CRUD: getItem gets one item. setItem for create and update. removeItem for delete.
   //
