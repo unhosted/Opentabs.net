@@ -426,9 +426,16 @@ require(['./syncer/remoteStorage'], function(drop) {
       onChange(onChangeHandler);
       //init all data:
       for(var i=0; i < paths.length; i++) {
-        var thisColl = getCollection(paths[i]);
+        fetch(paths[i]);
+      }
+      function fetch(path) {
+        var thisColl = getCollection(path);
         for(var key in thisColl) {
-          onChangeHandler({path: paths[i], key: key, newValue: getItem(paths[i], key), oldValue: undefined});
+          if(key[key.length-1]=='/') {
+            fetch(path+key);
+          } else {
+            onChangeHandler({key: path+key, newValue: getItem(path+key), oldValue: undefined});
+          }
         }
       }
     }
