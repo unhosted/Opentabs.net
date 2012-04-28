@@ -1,5 +1,6 @@
 <html>
   <body>
+    <div id="explanation"></div>
     <div id="transactions"></div>
   </body>
   <script src="remoteStorage.js"></script>
@@ -26,7 +27,7 @@
       var peer, item, parts = location.hash.substring(1).split('&');
       for(var i=0; i<parts.length; i++) {
         var partsParts = parts[i].split('=')
-        if(partsParts.length=2) {
+        if(partsParts.length==2) {
           console.log(partsParts[0]+':'+partsParts[1]);
           if(partsParts[0]=='peer') {
             peer = partsParts[1];
@@ -38,6 +39,10 @@
         if(peer && item) {
           var data = remoteStorage.getPublicItem(peer, 'money', item);
           console.log(data);
+          document.getElementById('explanation').innerHTML = 'This is the open tab between you and '
+            +peer+'. Since you are not logged in, you can only view the transactions here. '
+            +'To become an active Opentabs participant, sign in with a remoteStorage account. '
+            +'Find out <a href="http://unhosted.org/#remotestorage">where to get</a> a remoteStorage account.';
           document.getElementById('transactions').innerHTML = makeHtmlTable(data);
         }
       }
