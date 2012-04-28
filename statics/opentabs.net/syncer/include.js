@@ -72,21 +72,21 @@ require(['./syncer/remoteStorage'], function(drop) {
       orsc(readyState);
     }
     //localStorage keys used by this lib:
-    //_unhosted$userAddress
-    //_unhosted$categories
-    //_unhosted$storageInfo
-    //_unhosted$bearerToken
+    //_unhosted/userAddress
+    //_unhosted/categories
+    //_unhosted/storageInfo
+    //_unhosted/bearerToken
     
-    //_unhosted$pullInterval
+    //_unhosted/pullInterval
     
-    //_unhosted$lastPushStartTime
-    //_unhosted$lastPullStartTime
+    //_unhosted/lastPushStartTime
+    //_unhosted/lastPullStartTime
     
-    //_unhosted$lastPushEndTime
-    //_unhosted$lastPullEndTime
+    //_unhosted/lastPushEndTime
+    //_unhosted/lastPullEndTime
    
     //for each [category]:
-    //_unhosted$index:[category]
+    //_unhosted/index:[category]
 
     function connect(userAddress, categories, pullInterval, dialogPath) {
       ol('syncer.connect('
@@ -94,7 +94,7 @@ require(['./syncer/remoteStorage'], function(drop) {
         +JSON.stringify(categories)+', '
         +JSON.stringify(pullInterval)+', '
         +JSON.stringify(dialogPath)+');');
-      if(localStorage['_unhosted$bearerToken']) {
+      if(localStorage['_unhosted/bearerToken']) {
         console.log('err: already connected');
         return;
       }
@@ -104,18 +104,18 @@ require(['./syncer/remoteStorage'], function(drop) {
       if(typeof(pullInterval) === 'undefined') {
         pullInterval = 60;
       }
-      localStorage['_unhosted$userAddress'] = userAddress;
-      localStorage['_unhosted$categories'] = JSON.stringify(categories);
-      localStorage['_unhosted$pullInterval'] = pullInterval;
+      localStorage['_unhosted/userAddress'] = userAddress;
+      localStorage['_unhosted/categories'] = JSON.stringify(categories);
+      localStorage['_unhosted/pullInterval'] = pullInterval;
       window.open(dialogPath);
       window.addEventListener('storage', function(event) {
-        if(event.key=='_unhosted$bearerToken' && event.newValue) {
+        if(event.key=='_unhosted/bearerToken' && event.newValue) {
           if(pullInterval) {
             setInterval(work, pullInterval*1000);//will first trigger a pull if it's time for that
           }
           changeReadyState('connected', true);
         }
-        if(event.key=='_unhosted$dialogResult' && event.newValue) {
+        if(event.key=='_unhosted/dialogResult' && event.newValue) {
           try {
             console.log(JSON.parse(event.newValue));
           } catch(e) {
@@ -157,10 +157,10 @@ require(['./syncer/remoteStorage'], function(drop) {
         if(!localIndex[item] || localIndex[item] < remoteIndex[item]) {
           client.get(item/*+':'+remoteIndex[item]*/, function(err, data) {
             if(!err) {
-              var oldValue = localStorage[client.category+'$'+item];
+              var oldValue = localStorage[client.category+'/'+item];
               localIndex[item]=remoteIndex[item]
-              localStorage[client.category+'$_index']=JSON.stringify(localIndex);
-              localStorage[client.category+'$'+item]=data;
+              localStorage[client.category+'/']=JSON.stringify(localIndex);
+              localStorage[client.category+'/'+item]=data;
               oc({
                 category: client.category,
                 key: item,
@@ -168,7 +168,7 @@ require(['./syncer/remoteStorage'], function(drop) {
                 newValue: data,
                 timestamp: remoteIndex[item]
               });
-              ol(client.category+'$'+item+' <- '+data);
+              ol(client.category+'/'+item+' <- '+data);
             }
             doneCb();
           }); 
@@ -181,11 +181,11 @@ require(['./syncer/remoteStorage'], function(drop) {
       var havePushed=false;
       iterate(localIndex, function(item, doneCb) {
         if(!remoteIndex[item] || remoteIndex[item] < localIndex[item]) {
-          client.put(item/*+':'+localIndex[item]*/, localStorage[client.category+'$'+item], function(err) {
+          client.put(item/*+':'+localIndex[item]*/, localStorage[client.category+'/'+item], function(err) {
             if(err) {
               console.log('error pushing: '+err);
             } else {//success reported, so set remoteIndex timestamp to ours
-              ol(client.category+'$'+item+' -> '+localStorage[client.category+'$'+item]);
+              ol(client.category+'/'+item+' -> '+localStorage[client.category+'/'+item]);
               remoteIndex[item]=localIndex[item];
               havePushed=true;
             }
@@ -213,7 +213,7 @@ require(['./syncer/remoteStorage'], function(drop) {
       client.get('/', function(err, data) {
         if(!err) {
           var remoteIndex=parseObj(data);
-          var localIndex = parseObj(localStorage[category+'$_index']);
+          var localIndex = parseObj(localStorage[category+'/']);
           pullIn(localIndex, remoteIndex, client, function() {
             pushOut(localIndex, remoteIndex, client, cb);
           });
@@ -233,9 +233,9 @@ require(['./syncer/remoteStorage'], function(drop) {
     function pull(cb) {//gathers settings and calls pullCategories
       var categories, storageInfo, bearerToken;
       try {
-        categories=JSON.parse(localStorage['_unhosted$categories']);
-        storageInfo=JSON.parse(localStorage['_unhosted$storageInfo']);
-        bearerToken=localStorage['_unhosted$bearerToken'];
+        categories=JSON.parse(localStorage['_unhosted/categories']);
+        storageInfo=JSON.parse(localStorage['_unhosted/storageInfo']);
+        bearerToken=localStorage['_unhosted/bearerToken'];
       } catch(e) {
       }
       if(categories && storageInfo && bearerToken) {
@@ -243,10 +243,10 @@ require(['./syncer/remoteStorage'], function(drop) {
       }
     }
     function maybePull(now, cb) {
-      if(localStorage['_unhosted$pullInterval']) {
-        if(!localStorage['_unhosted$lastPullStartTime'] //never pulled yet
-          || parseInt(localStorage['_unhosted$lastPullStartTime']) + localStorage['_unhosted$pullInterval']*1000 < now) {//time to pull
-          localStorage['_unhosted$lastPullStartTime']=now;
+      if(localStorage['_unhosted/pullInterval']) {
+        if(!localStorage['_unhosted/lastPullStartTime'] //never pulled yet
+          || parseInt(localStorage['_unhosted/lastPullStartTime']) + localStorage['_unhosted/pullInterval']*1000 < now) {//time to pull
+          localStorage['_unhosted/lastPullStartTime']=now;
           changeReadyState('syncing', true);
           pull(function() {
             changeReadyState('syncing', false);
@@ -260,12 +260,12 @@ require(['./syncer/remoteStorage'], function(drop) {
       }
     }
     function pushItem(category, key, timestamp, indexStr, valueStr, cb) {
-      console.log('push '+category+'$'+key+': '+valueStr);
+      console.log('push '+category+'/'+key+': '+valueStr);
       if(category != '_unhosted') {
         var storageInfo, bearerToken;
         try {
-          storageInfo=JSON.parse(localStorage['_unhosted$storageInfo']);
-          bearerToken=localStorage['_unhosted$bearerToken'];
+          storageInfo=JSON.parse(localStorage['_unhosted/storageInfo']);
+          bearerToken=localStorage['_unhosted/bearerToken'];
         } catch(e) {
         }
         if(storageInfo && bearerToken) {
@@ -281,10 +281,10 @@ require(['./syncer/remoteStorage'], function(drop) {
       }
     }
     function onLoad() {
-      if(localStorage['_unhosted$pullInterval']) {
-        delete localStorage['_unhosted$lastPullStartTime'];
+      if(localStorage['_unhosted/pullInterval']) {
+        delete localStorage['_unhosted/lastPullStartTime'];
         work();
-        setInterval(work, localStorage['_unhosted$pullInterval']*1000);
+        setInterval(work, localStorage['_unhosted/pullInterval']*1000);
       }
     }
     function work() {
@@ -294,20 +294,20 @@ require(['./syncer/remoteStorage'], function(drop) {
     }
     function onReadyStateChange(cb) {
       orsc=cb;
-      changeReadyState('connected', (localStorage['_unhosted$bearerToken'] != null));
+      changeReadyState('connected', (localStorage['_unhosted/bearerToken'] != null));
     }
     function onChange(cb) {
       oc=cb;
     }
     function getUserAddress() {
-      return localStorage['_unhosted$userAddress'];
+      return localStorage['_unhosted/userAddress'];
     }
     function getItem(category, key) {
       ol('syncer.getItem('
         +JSON.stringify(category)+', '
         +JSON.stringify(key)+');');
       try {
-        return JSON.parse(localStorage[category+'$'+key]);
+        return JSON.parse(localStorage[category+'/'+key]);
       } catch(e) {
         return null;
       }
@@ -321,12 +321,12 @@ require(['./syncer/remoteStorage'], function(drop) {
       if(key=='_index') {
         return 'item key "_index" is reserved, pick another one please';
       } else {
-        var currValStr = localStorage[category+'$'+key];
+        var currValStr = localStorage[category+'/'+key];
         if(valueStr != currValStr) {
           var now = new Date().getTime();
           var index;
           try {
-            index=JSON.parse(localStorage[category+'$_index']);
+            index=JSON.parse(localStorage[category+'/']);
           } catch(e) {
           }
           if(!index) {
@@ -334,8 +334,8 @@ require(['./syncer/remoteStorage'], function(drop) {
           }
           index[key]=now;
           var indexStr=JSON.stringify(index);
-          localStorage[category+'$_index']=indexStr;
-          localStorage[category+'$'+key]=valueStr;
+          localStorage[category+'/']=indexStr;
+          localStorage[category+'/'+key]=valueStr;
           pushItem(category, key, now, indexStr, valueStr);
           oc({key: key, oldValue: getItem(category, key), newValue: value});
         }
@@ -350,14 +350,14 @@ require(['./syncer/remoteStorage'], function(drop) {
       } else {
         var index;
         try {
-          index=JSON.parse(localStorage[category+'$_index']);
+          index=JSON.parse(localStorage[category+'/']);
         } catch(e) {
         }
         if(index) {
           delete index[key];
           var indexStr=JSON.stringify(index);
-          localStorage[category+'$_index']=indexStr;
-          delete localStorage[category+'$'+key];
+          localStorage[category+'/']=indexStr;
+          delete localStorage[category+'/'+key];
           var now = new Date().getTime();
           pushItem(category, key, now, indexStr, null);
           oc({key: key, oldValue: getItem(category, key), newValue: undefined});
@@ -369,14 +369,14 @@ require(['./syncer/remoteStorage'], function(drop) {
         +JSON.stringify(category)+');');
       var index;
       try {
-        index=JSON.parse(localStorage[category+'$_index']);
+        index=JSON.parse(localStorage[category+'/']);
       } catch(e) {
       }
       if(index) {
         var items = [];
         for(var i in index) {
           try {
-            items.push(JSON.parse(localStorage[category+'$'+i]));
+            items.push(JSON.parse(localStorage[category+'/'+i]));
           } catch(e) {
           }
         }
