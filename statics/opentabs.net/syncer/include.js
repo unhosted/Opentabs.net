@@ -85,8 +85,8 @@ require(['./syncer/remoteStorage'], function(drop) {
     //_unhosted/lastPushEndTime
     //_unhosted/lastPullEndTime
    
-    //for each [category]:
-    //_unhosted/index:[category]
+    //for each [path]:
+    //_unhosted/index:[path]
 
     function connect(userAddress, paths, pullInterval, dialogPath) {
       ol('syncer.connect('
@@ -157,18 +157,18 @@ require(['./syncer/remoteStorage'], function(drop) {
         if(!localIndex[item] || localIndex[item] < remoteIndex[item]) {
           client.get(item/*+':'+remoteIndex[item]*/, function(err, data) {
             if(!err) {
-              var oldValue = localStorage[client.category+'/'+item];
+              var oldValue = localStorage[client.path+'/'+item];
               localIndex[item]=remoteIndex[item]
-              localStorage[client.category+'/']=JSON.stringify(localIndex);
-              localStorage[client.category+'/'+item]=data;
+              localStorage[client.path+'/']=JSON.stringify(localIndex);
+              localStorage[client.path+'/'+item]=data;
               oc({
-                category: client.category,
+                path: client.path,
                 key: item,
                 oldValue: oldValue,
                 newValue: data,
                 timestamp: remoteIndex[item]
               });
-              ol(client.category+'/'+item+' <- '+data);
+              ol(client.path+'/'+item+' <- '+data);
             }
             doneCb();
           }); 
@@ -181,11 +181,11 @@ require(['./syncer/remoteStorage'], function(drop) {
       var havePushed=false;
       iterate(localIndex, function(item, doneCb) {
         if(!remoteIndex[item] || remoteIndex[item] < localIndex[item]) {
-          client.put(item/*+':'+localIndex[item]*/, localStorage[client.category+'/'+item], function(err) {
+          client.put(item/*+':'+localIndex[item]*/, localStorage[client.path+'/'+item], function(err) {
             if(err) {
               console.log('error pushing: '+err);
             } else {//success reported, so set remoteIndex timestamp to ours
-              ol(client.category+'/'+item+' -> '+localStorage[client.category+'/'+item]);
+              ol(client.path+'/'+item+' -> '+localStorage[client.path+'/'+item]);
               remoteIndex[item]=localIndex[item];
               havePushed=true;
             }
@@ -207,20 +207,20 @@ require(['./syncer/remoteStorage'], function(drop) {
         //}
       });
     }
-    function pullPath(storageInfo, category, bearerToken, cb) {//calls pullIn, then pushOut for a category
-      var client=remoteStorage.createClient(storageInfo, category, bearerToken);
-      client.category = category;
+    function pullPath(storageInfo, path, bearerToken, cb) {//calls pullIn, then pushOut for a path
+      var client=remoteStorage.createClient(storageInfo, path, bearerToken);
+      client.path = path;
       client.get('/', function(err, data) {
         if(!err) {
           var remoteIndex=parseObj(data);
-          var localIndex = parseObj(localStorage[category+'/']);
+          var localIndex = parseObj(localStorage[path+'/']);
           pullIn(localIndex, remoteIndex, client, function() {
             pushOut(localIndex, remoteIndex, client, cb);
           });
         }
       });
     }
-    function pullPaths(storageInfo, paths, bearerToken, cb) {//calls pullPath once for every category
+    function pullPaths(storageInfo, paths, bearerToken, cb) {//calls pullPath once for every path
       if(paths.length) {
         var thisCat=paths.shift();
         pullPath(storageInfo, thisCat, bearerToken, function() {
@@ -259,9 +259,9 @@ require(['./syncer/remoteStorage'], function(drop) {
         cb();
       }
     }
-    function pushItem(category, key, timestamp, indexStr, valueStr, cb) {
-      console.log('push '+category+'/'+key+': '+valueStr);
-      if(category != '_unhosted') {
+    function pushItem(path, key, timestamp, indexStr, valueStr, cb) {
+      console.log('push '+path+'/'+key+': '+valueStr);
+      if(path != '_unhosted') {
         var storageInfo, bearerToken;
         try {
           storageInfo=JSON.parse(localStorage['_unhosted/storageInfo']);
@@ -269,7 +269,7 @@ require(['./syncer/remoteStorage'], function(drop) {
         } catch(e) {
         }
         if(storageInfo && bearerToken) {
-          var client = remoteStorage.createClient(storageInfo, category, bearerToken);
+          var client = remoteStorage.createClient(storageInfo, path, bearerToken);
           client.put('_index', indexStr, function(err, data) {
             client.put(key+':'+timestamp, valueStr, function(err, data) {
             });
@@ -302,31 +302,31 @@ require(['./syncer/remoteStorage'], function(drop) {
     function getUserAddress() {
       return localStorage['_unhosted/userAddress'];
     }
-    function getItem(category, key) {
+    function getItem(path, key) {
       ol('syncer.getItem('
-        +JSON.stringify(category)+', '
+        +JSON.stringify(path)+', '
         +JSON.stringify(key)+');');
       try {
-        return JSON.parse(localStorage[category+'/'+key]);
+        return JSON.parse(localStorage[path+'/'+key]);
       } catch(e) {
         return null;
       }
     }
-    function setItem(category, key, value) {
+    function setItem(path, key, value) {
       ol('syncer.setItem('
-        +JSON.stringify(category)+', '
+        +JSON.stringify(path)+', '
         +JSON.stringify(key)+', '
         +JSON.stringify(value)+');');
       var valueStr = JSON.stringify(value);
       if(key=='_index') {
         return 'item key "_index" is reserved, pick another one please';
       } else {
-        var currValStr = localStorage[category+'/'+key];
+        var currValStr = localStorage[path+'/'+key];
         if(valueStr != currValStr) {
           var now = new Date().getTime();
           var index;
           try {
-            index=JSON.parse(localStorage[category+'/']);
+            index=JSON.parse(localStorage[path+'/']);
           } catch(e) {
           }
           if(!index) {
@@ -334,49 +334,49 @@ require(['./syncer/remoteStorage'], function(drop) {
           }
           index[key]=now;
           var indexStr=JSON.stringify(index);
-          localStorage[category+'/']=indexStr;
-          localStorage[category+'/'+key]=valueStr;
-          pushItem(category, key, now, indexStr, valueStr);
-          oc({key: key, oldValue: getItem(category, key), newValue: value});
+          localStorage[path+'/']=indexStr;
+          localStorage[path+'/'+key]=valueStr;
+          pushItem(path, key, now, indexStr, valueStr);
+          oc({key: key, oldValue: getItem(path, key), newValue: value});
         }
       }
     }
-    function removeItem(category, key) {
+    function removeItem(path, key) {
       ol('syncer.removeItem('
-        +JSON.stringify(category)+', '
+        +JSON.stringify(path)+', '
         +JSON.stringify(key)+');');
       if(key=='_index') {
         return 'item key "_index" is reserved, pick another one please';
       } else {
         var index;
         try {
-          index=JSON.parse(localStorage[category+'/']);
+          index=JSON.parse(localStorage[path+'/']);
         } catch(e) {
         }
         if(index) {
           delete index[key];
           var indexStr=JSON.stringify(index);
-          localStorage[category+'/']=indexStr;
-          delete localStorage[category+'/'+key];
+          localStorage[path+'/']=indexStr;
+          delete localStorage[path+'/'+key];
           var now = new Date().getTime();
-          pushItem(category, key, now, indexStr, null);
-          oc({key: key, oldValue: getItem(category, key), newValue: undefined});
+          pushItem(path, key, now, indexStr, null);
+          oc({key: key, oldValue: getItem(path, key), newValue: undefined});
         }
       }
     } 
-    function getCollection(category) {
+    function getCollection(path) {
       ol('syncer.getCollection('
-        +JSON.stringify(category)+');');
+        +JSON.stringify(path)+');');
       var index;
       try {
-        index=JSON.parse(localStorage[category+'/']);
+        index=JSON.parse(localStorage[path+'/']);
       } catch(e) {
       }
       if(index) {
         var items = [];
         for(var i in index) {
           try {
-            items.push(JSON.parse(localStorage[category+'/'+i]));
+            items.push(JSON.parse(localStorage[path+'/'+i]));
           } catch(e) {
           }
         }
@@ -428,7 +428,7 @@ require(['./syncer/remoteStorage'], function(drop) {
       for(var i=0; i < paths.length; i++) {
         var thisColl = getCollection(paths[i]);
         for(var key in thisColl) {
-          onChangeHandler({category: paths[i], key: key, newValue: getItem(paths[i], key), oldValue: undefined});
+          onChangeHandler({path: paths[i], key: key, newValue: getItem(paths[i], key), oldValue: undefined});
         }
       }
     }
