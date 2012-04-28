@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+  <head>
+    <title>Inspector Gadget</title>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/jpg" href="inspector-gadget.jpg">
+    <script src="include.js"></script>
+    <script>
+      document.getElementById('log-div').innerHTML = syncer.onLog(function(str) {
+        document.getElementById('log-div').innerHTML = '<p>'+str+'</p>'
+          + document.getElementById('log-div').innerHTML;
+      });
+    </script>
+  </head>
+  <body>
+    <p><img src="inspector-gadget.jpg">Wowsers! This gadget will self-inspect. Keep this tab open on the side, to see debug messages of the syncer:</p>
+    <div id="log-div" style="border-style:solid"></div>
+  </body>
+</html>
