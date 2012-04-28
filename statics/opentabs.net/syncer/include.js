@@ -155,7 +155,7 @@ require(['./syncer/remoteStorage'], function(drop) {
     function pullIn(localIndex, remoteIndex, client, cb) {//iterates over remoteIndex, pulling where necessary
       iterate(remoteIndex, function(item, doneCb) {
         if(!localIndex[item] || localIndex[item] < remoteIndex[item]) {
-          client.get(item+':'+remoteIndex[item], function(err, data) {
+          client.get(item/*+':'+remoteIndex[item]*/, function(err, data) {
             if(!err) {
               var oldValue = localStorage[client.category+'$'+item];
               localIndex[item]=remoteIndex[item]
@@ -171,7 +171,7 @@ require(['./syncer/remoteStorage'], function(drop) {
               ol(client.category+'$'+item+' <- '+data);
             }
             doneCb();
-          });
+          }); 
         } else {
           doneCb();
         }
@@ -181,7 +181,7 @@ require(['./syncer/remoteStorage'], function(drop) {
       var havePushed=false;
       iterate(localIndex, function(item, doneCb) {
         if(!remoteIndex[item] || remoteIndex[item] < localIndex[item]) {
-          client.put(item+':'+localIndex[item], localStorage[client.category+'$'+item], function(err) {
+          client.put(item/*+':'+localIndex[item]*/, localStorage[client.category+'$'+item], function(err) {
             if(err) {
               console.log('error pushing: '+err);
             } else {//success reported, so set remoteIndex timestamp to ours
@@ -190,27 +190,27 @@ require(['./syncer/remoteStorage'], function(drop) {
               havePushed=true;
             }
             doneCb();
-          });
+           });
         } else {
           doneCb();
         }
       }, function() {
-        if(havePushed) {
-          client.put('_index', JSON.stringify(remoteIndex), function(err) {
-            if(err) {
-              console.log('error pushing index: '+err);
-            }
-            cb();
-          });
-        } else {
+        //if(havePushed) {
+          //client.put('_index', JSON.stringify(remoteIndex), function(err) {
+          //  if(err) {
+          //    console.log('error pushing index: '+err);
+          //  }
+          //  cb();
+          //});
+        //} else {
           cb();
-        }
+        //}
       });
     }
     function pullCategory(storageInfo, category, bearerToken, cb) {//calls pullIn, then pushOut for a category
       var client=remoteStorage.createClient(storageInfo, category, bearerToken);
       client.category = category;
-      client.get('_index', function(err, data) {
+      client.get('/', function(err, data) {
         if(!err) {
           var remoteIndex=parseObj(data);
           var localIndex = parseObj(localStorage[category+'$_index']);
