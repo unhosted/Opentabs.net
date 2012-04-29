@@ -16,14 +16,14 @@ define(
         scopeParts=[];
         if(storageInfo.type.split('#')[0] == 'pds-remotestorage-00') {
           for(i in categories) { 
-            scopeParts.push(categories[i] + ':rw');
+            scopeParts.push(categories[i]);
           }
         } else {
           for(i in categories) {
             if(categories[i] == 'public') {
               scopeParts.push('legacy:rw');
             } else {
-              scopeParts.push(categories[i] + ':rw');
+              scopeParts.push(categories[i]);
             }
           }
         }

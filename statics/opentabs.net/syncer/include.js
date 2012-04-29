@@ -112,10 +112,10 @@ require(['./syncer/remoteStorage'], function(drop) {
       for(var i=0; i<fullAccess.length; i++) {
         paths.push(fullAccess[i]+':rw');
       }
+      localStorage['_unhosted/dialogPath'] = dialogPath;
       localStorage['_unhosted/userAddress'] = userAddress;
       localStorage['_unhosted/paths'] = JSON.stringify(paths);
       localStorage['_unhosted/pullInterval'] = pullInterval;
-      window.open(dialogPath);
       window.addEventListener('storage', function(event) {
         if(event.key=='_unhosted/bearerToken' && event.newValue) {
           if(pullInterval) {
@@ -132,6 +132,10 @@ require(['./syncer/remoteStorage'], function(drop) {
         }
       }, false);
       //TODO: deal with dialog failures
+      doOAuth();
+    }
+    function doOAuth() {
+      window.open(localStorage['_unhosted/dialogPath']);
     }
     function toWebAddress(userAddress, path) {
       return getStorageBaseAddress(userAddress)+path;
@@ -167,7 +171,13 @@ require(['./syncer/remoteStorage'], function(drop) {
       iterate(remoteIndex, function(item, doneCb) {
         if(!localIndex[item] || localIndex[item] < remoteIndex[item]) {
           client.get(item/*+':'+remoteIndex[item]*/, function(err, data) {
-            if(!err) {
+            if(err) {
+              if(err == 403) {
+                doOAuth();
+              } else {
+                console.log('error during pullIn! '+err);
+              }
+            } else {
               var oldValue = localStorage[client.path+'/'+item];
               localIndex[item]=remoteIndex[item]
               localStorage[client.path+'/']=JSON.stringify(localIndex);
@@ -194,6 +204,11 @@ require(['./syncer/remoteStorage'], function(drop) {
         if(!remoteIndex[item] || remoteIndex[item] < localIndex[item]) {
           client.put(item/*+':'+localIndex[item]*/, localStorage[client.path+'/'+item], function(err) {
             if(err) {
+              if(err == 403) {
+                doOAuth();
+              } else {
+                console.log('error during pullIn! '+err);
+              }
               console.log('error pushing: '+err);
             } else {//success reported, so set remoteIndex timestamp to ours
               ol(client.path+'/'+item+' -> '+localStorage[client.path+'/'+item]);
@@ -222,7 +237,13 @@ require(['./syncer/remoteStorage'], function(drop) {
       var client=remoteStorage.createClient(storageInfo, path, bearerToken);
       client.path = path;
       client.get('/', function(err, data) {
-        if(!err) {
+        if(err) {
+          if(err == 403) {
+            doOAuth();
+          } else {
+            console.log('error during pullPath! '+err);
+          }
+        } else {
           var remoteIndex=parseObj(data);
           var localIndex = parseObj(localStorage[path+'/']);
           pullIn(localIndex, remoteIndex, client, function() {
@@ -398,7 +419,7 @@ require(['./syncer/remoteStorage'], function(drop) {
     }
     function display(options) {
       //TODO: check if barElement, readAccess, fullAccess, libDir, onChange are all set
-      if(options.libDir.length && libDir[libDir.length - 1] != '/') {//libDir without trailing slash
+      if(options.libDir.length && options.libDir[options.libDir.length - 1] != '/') {//libDir without trailing slash
         options.libDir += '/'
       }
       document.getElementById(options.barElement).innerHTML = '<div id="remotestorage-loading">Loading...</div>'
@@ -437,6 +458,7 @@ require(['./syncer/remoteStorage'], function(drop) {
       });
       onChange(options.onChange);
       //init all data:
+      var paths = JSON.parse(localStorage['_unhosted/paths']);
       for(var i=0; i < paths.length; i++) {
         fetch(paths[i]);
       }
@@ -446,7 +468,7 @@ require(['./syncer/remoteStorage'], function(drop) {
           if(key[key.length-1]=='/') {
             fetch(path+key);
           } else {
-            onChangeHandler({key: path+key, newValue: getItem(path+key), oldValue: undefined});
+            onChange({key: path+key, newValue: getItem(path+key), oldValue: undefined});
           }
         }
       }

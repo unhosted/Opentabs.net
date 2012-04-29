@@ -1,6 +1,6 @@
 setTimeout(function() {
   syncer.display({
-    signInDiv: 'remotestorage-bar',
+    barElement: 'remotestorage-bar',
     readAccess: ['contacts/mailto', 'contacts/firstName', 'contacts/lastName', 'contacts/tags'], 
     fullAccess: ['money/peers', 'public/money/tabs'],
     libDir: 'syncer/',
