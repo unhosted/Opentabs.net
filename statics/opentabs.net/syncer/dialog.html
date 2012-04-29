@@ -5,26 +5,44 @@
     <script src="require.js"></script>
     <script>
       require(['./remoteStorage'], function(remoteStorage) {
+        function errorReported() {
+          var hashParams = location.hash.substring(1).split('&');
+          var retVal = false;
+          for(var i in hashParams) {
+            var parts = hashParams[i].split('=');
+            if(parts.length == 2) {
+              if(parts[0] == 'error') {
+                retVal = true;
+              }
+              if(parts[0] == 'error_description') {
+                return parts[1];
+              }
+            }
+          }
+          return retVal;
+        }
         var bearerToken = remoteStorage.receiveToken();
         if(bearerToken) {
           document.write('Closing dialog...');
-          localStorage.setItem('_unhosted$bearerToken', bearerToken);
-          localStorage.setItem('_unhosted:dialogResult', JSON.stringify({
+          localStorage.setItem('_unhosted/bearerToken', bearerToken);
+          localStorage.setItem('_unhosted/dialogResult', JSON.stringify({
             err: null
           }));
           window.close();
+        } else if(errorReported()) {
+          document.write('Error: '+errorReported());
         } else {
           document.write('Opening dialog...');
-          var userAddress = localStorage.getItem('_unhosted$userAddress');
-          var categories = JSON.parse(localStorage.getItem('_unhosted$categories'));
+          var userAddress = localStorage.getItem('_unhosted/userAddress');
+          var categories = JSON.parse(localStorage.getItem('_unhosted/categories'));
           remoteStorage.getStorageInfo(userAddress, function(err, storageInfo) {
             if(err) {
-              localStorage.setItem('_unhosted:dialogResult', JSON.stringify({
+              localStorage.setItem('_unhosted/dialogResult', JSON.stringify({
                 err: err
               }));
               window.close();
             } else {
-              localStorage.setItem('_unhosted$storageInfo', JSON.stringify(storageInfo));
+              localStorage.setItem('_unhosted/storageInfo', JSON.stringify(storageInfo));
               var oauthAddress = remoteStorage.createOAuthAddress(storageInfo, categories, location.href);
               window.location = oauthAddress;
             }
