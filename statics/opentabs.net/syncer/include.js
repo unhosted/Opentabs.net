@@ -423,7 +423,7 @@ require(['./syncer/remoteStorage'], function(drop) {
             +'</span>';
           document.getElementById('remotestorage-disconnect').onclick= function() { 
             localStorage.clear();
-            optoins.onChange({key: null, oldValue: null, newValue: null});
+            options.onChange({key: null, oldValue: null, newValue: null});
             changeReadyState('connected', false);
           }
         } else {
