@@ -12,7 +12,7 @@
             var parts = hashParams[i].split('=');
             if(parts.length == 2) {
               if(parts[0] == 'error') {
-                retVal = true;
+                retVal = parts[1];
               }
               if(parts[0] == 'error_description') {
                 return parts[1];
@@ -34,7 +34,7 @@
         } else {
           document.write('Opening dialog...');
           var userAddress = localStorage.getItem('_unhosted/userAddress');
-          var categories = JSON.parse(localStorage.getItem('_unhosted/categories'));
+          var paths = JSON.parse(localStorage.getItem('_unhosted/paths'));
           remoteStorage.getStorageInfo(userAddress, function(err, storageInfo) {
             if(err) {
               localStorage.setItem('_unhosted/dialogResult', JSON.stringify({
@@ -43,7 +43,7 @@
               window.close();
             } else {
               localStorage.setItem('_unhosted/storageInfo', JSON.stringify(storageInfo));
-              var oauthAddress = remoteStorage.createOAuthAddress(storageInfo, categories, location.href);
+              var oauthAddress = remoteStorage.createOAuthAddress(storageInfo, paths, location.href);
               window.location = oauthAddress;
             }
           });
