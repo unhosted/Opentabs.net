@@ -1,6 +1,12 @@
 setTimeout(function() {
-  syncer.display('remotestorage-bar', ['money', 'contacts'], 'syncer/', function(e) {
-    redraw();
+  syncer.display({
+    signInDiv: 'remotestorage-bar',
+    readAccess: ['contacts/mailto', 'contacts/firstName', 'contacts/lastName', 'contacts/tags'], 
+    fullAccess: ['money/peers', 'public/money/tabs'],
+    libDir: 'syncer/',
+    onChange: function(e) {
+      redraw();
+    }
   });
 }, 1000);
 function stripSlash(str) {

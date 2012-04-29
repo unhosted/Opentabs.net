@@ -88,10 +88,11 @@ require(['./syncer/remoteStorage'], function(drop) {
     //for each [path]:
     //_unhosted/index:[path]
 
-    function connect(userAddress, paths, pullInterval, dialogPath) {
+    function connect(userAddress, readAccess, fullAccess, pullInterval, dialogPath) {
       ol('syncer.connect('
         +JSON.stringify(userAddress)+', '
-        +JSON.stringify(paths)+', '
+        +JSON.stringify(readAccess)+', '
+        +JSON.stringify(fullAccess)+', '
         +JSON.stringify(pullInterval)+', '
         +JSON.stringify(dialogPath)+');');
       if(localStorage['_unhosted/bearerToken']) {
@@ -103,6 +104,13 @@ require(['./syncer/remoteStorage'], function(drop) {
       }
       if(typeof(pullInterval) === 'undefined') {
         pullInterval = 60;
+      }
+      var paths = [];
+      for(var i=0; i<readAccess.length; i++) {
+        paths.push(readAccess[i]+':r');
+      }
+      for(var i=0; i<fullAccess.length; i++) {
+        paths.push(fullAccess[i]+':rw');
       }
       localStorage['_unhosted/userAddress'] = userAddress;
       localStorage['_unhosted/paths'] = JSON.stringify(paths);
@@ -124,6 +132,9 @@ require(['./syncer/remoteStorage'], function(drop) {
         }
       }, false);
       //TODO: deal with dialog failures
+    }
+    function toWebAddress(userAddress, path) {
+      return getStorageBaseAddress(userAddress)+path;
     }
     function parseObj(str) {
       var obj;
@@ -385,14 +396,15 @@ require(['./syncer/remoteStorage'], function(drop) {
         return [];
       }
     }
-    function display(barElement, paths, libDir, onChangeHandler) {
-      if(libDir.length && libDir[libDir.length - 1] != '/') {//libDir without trailing slash
-        libDir += '/'
+    function display(options) {
+      //TODO: check if barElement, readAccess, fullAccess, libDir, onChange are all set
+      if(options.libDir.length && libDir[libDir.length - 1] != '/') {//libDir without trailing slash
+        options.libDir += '/'
       }
-      document.getElementById(barElement).innerHTML = '<div id="remotestorage-loading">Loading...</div>'
+      document.getElementById(options.barElement).innerHTML = '<div id="remotestorage-loading">Loading...</div>'
         +'<div id="remotestorage-disconnected" style="display:none">'
         +'  <input id="remotestorage-useraddress" autofocus="" placeholder="user@server"'
-        +'    style="width:20em; height:2.5em; padding-left:4em; background:url(\''+libDir+'remoteStorage-icon.png\') no-repeat .3em center"'
+        +'    style="width:20em; height:2.5em; padding-left:4em; background:url(\''+options.libDir+'remoteStorage-icon.png\') no-repeat .3em center"'
         +'> <input id="remotestorage-connect" type="submit" value="connect"'
         +'    style="cursor:pointer;background-color: #006DCC; background-image: -moz-linear-gradient(center top , #0088CC, #0044CC); background-repeat: repeat-x;'
         +'      border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25); border-radius: 4px; margin-left:-7em"'
@@ -411,7 +423,7 @@ require(['./syncer/remoteStorage'], function(drop) {
             +'</span>';
           document.getElementById('remotestorage-disconnect').onclick= function() { 
             localStorage.clear();
-            onChangeHandler({key: null, oldValue: null, newValue: null});
+            optoins.onChange({key: null, oldValue: null, newValue: null});
             changeReadyState('connected', false);
           }
         } else {
@@ -419,11 +431,11 @@ require(['./syncer/remoteStorage'], function(drop) {
           document.getElementById('remotestorage-status').style.display='none';
           document.getElementById('remotestorage-disconnected').style.display='block';
           document.getElementById('remotestorage-connect').onclick = function() {
-            connect(document.getElementById('remotestorage-useraddress').value, paths, 10, libDir+'dialog.html');
+            connect(document.getElementById('remotestorage-useraddress').value, options.readAccess, options.fullAccess, 10, options.libDir+'dialog.html');
           };
         }
       });
-      onChange(onChangeHandler);
+      onChange(options.onChange);
       //init all data:
       for(var i=0; i < paths.length; i++) {
         fetch(paths[i]);
