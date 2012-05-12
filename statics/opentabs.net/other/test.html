@@ -1,0 +1,24 @@
+
+<div id="testDiv"></div>
+<script src="js/_.js"></script>
+<script>
+  var templates = {
+    person: {
+      default: 'hello <%= name %> <% print(stateChanger(\'edit greeting\', \'editGreeting\')); %>',
+      editGreeting: 'edit greeting'
+    }
+  };
+  var stateChanger = function(buttonText, nextState) {
+    return '<input type="submit" value="'+buttonText
+      +'" onclick="this.parentNode.render(\''+nextState+'\');">';
+  }
+  function bind(divName, obj) {
+    document.getElementById(divName).render = (function(obj) {
+      return function(state) {
+        this.innerHTML = _.template(templates[obj.type][state], obj);
+      };
+    })(obj);
+  }
+  bind('testDiv', {type: 'person', name:'Michiel'});
+  document.getElementById('testDiv').render('default');
+</script>
