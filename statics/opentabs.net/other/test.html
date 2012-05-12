@@ -4,14 +4,11 @@
 <script>
   var templates = {
     person: {
-      default: 'hello <%= name %> <% print(stateChanger(\'edit greeting\', \'editGreeting\')); %>',
+      default: 'hello <%= name %> <input type="submit" value="edit greeting" '
+        +'onclick="this.parentNode.render(\'editGreeting\');">',
       editGreeting: 'edit greeting'
     }
   };
-  var stateChanger = function(buttonText, nextState) {
-    return '<input type="submit" value="'+buttonText
-      +'" onclick="this.parentNode.render(\''+nextState+'\');">';
-  }
   function bind(divName, obj) {
     document.getElementById(divName).render = (function(obj) {
       return function(state) {
