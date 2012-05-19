@@ -1,0 +1,52 @@
+<html>
+<script src="js/_.js"></script>
+<script>
+  function tContact(eltName) {
+    return '<span style="color:blue">&lt;<%= '+ eltName +' %>&gt;</span>';
+  }
+  function tDebtAmount(amountEltName, currencyEltName) {
+    return '<span style="color:red"><%= '+ amountEltName +' %> <%= '+ currencyEltName +' %></span>';
+  }
+  function tDate(eltName) {
+    return '<%= '+eltName+' %>';
+  }
+  var templates = {
+    'http://spec.opentabs.net/tab/one-to-one':
+      '<h2>Open tab between '+tContact('balance.debtor')+' and '+tContact('balance.creditor')+'</h2>'
+      +'<h3>Current balance: '+tContact('balance.debtor')+' owes '+tContact('balance.creditor')+' '+tDebtAmount('balance.amount', 'balance.currency')+'</h3>'
+      +'<h2>Transactions:</h2><table><tr><td>From:</td><td>To:</td><td>Amount</td><td>Date</td></tr>'
+      +'<tr><td>'+tContact('deals[0].transfers[0].from')+'</td><td>'+tContact('deals[0].transfers[0].to')+'</td>'
+      +'<td>'+tDebtAmount('deals[0].transfers[0].amount', 'deals[0].transfers[0].currency')+'</td><td>'+tDate('deals[0].transfers[0].timestamp')+'</td></tr>'
+      +'<tr><td>'+tContact('deals[1].transfers[0].from')+'</td><td>'+tContact('deals[1].transfers[0].to')+'</td>'
+      +'<td>'+tDebtAmount('deals[1].transfers[0].amount', 'deals[1].transfers[0].currency')+'</td><td>'+tDate('deals[1].transfers[0].timestamp')+'</td></tr>'
+      +'</table>'
+  };
+  function getStorageAddress(peer) {
+    return 'https://owncube.com/apps/remoteStorage/WebDAV.php/michiel/remoteStorage/';
+  }
+  function fetchTab(peer, tab, cb) {
+    var xhr= new XMLHttpRequest();
+    xhr.open('GET', getStorageAddress(peer)+'public/money/'+tab, true);
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState==4) {
+        if(xhr.status==200) {
+          var obj;
+          try {
+            obj = JSON.parse(xhr.responseText);
+          } catch(e) {
+            obj = {
+              text: xhr.responseText
+            };
+          }
+          cb(null, obj);
+        } else {
+          cb(xhr.status);
+        }
+      }
+    };
+    xhr.send();
+  }
+  fetchTab(location.search.substring(1), location.hash.substring(1), function(err, obj) {
+    document.write(_.template(templates[obj['@type']], obj));
+  });
+</script>
