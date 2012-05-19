@@ -14,7 +14,7 @@
     'http://spec.opentabs.net/tab/one-to-one':
       '<h2>Open tab between '+tContact('balance.debtor')+' and '+tContact('balance.creditor')+'</h2>'
       +'<h3>Current balance: '+tContact('balance.debtor')+' owes '+tContact('balance.creditor')+' '+tDebtAmount('balance.amount', 'balance.currency')+'</h3>'
-      +'<h2>Transactions:</h2><table><tr><td>From:</td><td>To:</td><td>Amount</td><td>Date</td></tr>'
+      +'<img src="hamster.jpg"><h2>Transactions:</h2><table><tr><td>From:</td><td>To:</td><td>Amount</td><td>Date</td></tr>'
       +'<tr><td>'+tContact('deals[0].transfers[0].from')+'</td><td>'+tContact('deals[0].transfers[0].to')+'</td>'
       +'<td>'+tDebtAmount('deals[0].transfers[0].amount', 'deals[0].transfers[0].currency')+'</td><td>'+tDate('deals[0].transfers[0].timestamp')+'</td></tr>'
       +'<tr><td>'+tContact('deals[1].transfers[0].from')+'</td><td>'+tContact('deals[1].transfers[0].to')+'</td>'
