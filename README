@@ -1,3 +1,1 @@
-To deploy changes to a nodejitsu:
-npm install -g jitsu
-jitsu deploy
+The contents of http://opentabs.net

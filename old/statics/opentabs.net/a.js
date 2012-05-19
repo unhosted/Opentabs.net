@@ -1,0 +1,4 @@
+
+var a = JSON.parse('[{ "@type": "http://spec.opentabs.net/transfer/cashInHand", "pcFrom": "mailto:michiel@unhosted.org", "pcTo": "mailto:fkooman@tuxed.net", "amount": 50, "currency": "EUR", "timestamp": 1352055600000 }]');
+
+var b=JSON.parse('{ "@type": "http://spec.opentabs.net/tab/one-to-one", "balance": { "@type": "http://spec.opentabs.net/balance/one-to-one", "pcOwer": "mailto:fkooman@tuxed.net", "pcOwee": "mailto:michiel@unhosted.org", "amount": 70, "currency": "EUR", "timestamp": 1337415652313 }, "deals": [ { "@type": "http://spec.opentabs.net/deal/lendSomeMoney", "transfers": []}, { "@type": "http://spec.opentabs.net/deal/lendSomeMoney", "transfers": [{ "@type": "http://spec.opentabs.net/transfer/cashInHand", "pcFrom": "mailto:michiel@unhosted.org", "pcTo": "mailto:fkooman@tuxed.net", "amount": 20, "currency": "EUR", "timestamp": 1354647600000 }] } ] }');
